@@ -1,0 +1,209 @@
+#!/bin/bash
+
+# Script de configuración para CyberAegis
+echo '#!/bin/bash
+
+# Colores para mensajes
+RED="\033[0;31m"
+GREEN="\033[0;32m"
+BLUE="\033[0;34m"
+NC="\033[0m"
+
+echo -e "${BLUE}Iniciando configuración de CyberAegis...${NC}"
+
+# Verificar Node.js
+if ! command -v node &> /dev/null; then
+    echo -e "${RED}Node.js no está instalado. Por favor, instálalo primero.${NC}"
+    exit 1
+fi
+
+# Crear estructura del proyecto
+echo -e "${GREEN}Creando estructura del proyecto...${NC}"
+mkdir -p cyberaegis
+cd cyberaegis
+mkdir -p src/{components/{ui,layout,scanner},pages,styles,utils}
+mkdir -p public
+mkdir -p .github/workflows
+
+# Inicializar proyecto
+echo -e "${GREEN}Inicializando proyecto Node.js...${NC}"
+npm init -y
+
+# Modificar package.json
+echo -e "${GREEN}Configurando package.json...${NC}"
+cat > package.json << EOL
+{
+  "name": "cyberaegis",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  }
+}
+EOL
+
+# Instalar dependencias
+echo -e "${GREEN}Instalando dependencias...${NC}"
+npm install next react react-dom @heroicons/react lucide-react @radix-ui/react-slot class-variance-authority clsx tailwind-merge tailwindcss-animate
+npm install -D typescript @types/node @types/react autoprefixer postcss tailwindcss
+
+# Configurar Next.js
+echo -e "${GREEN}Configurando Next.js...${NC}"
+cat > next.config.js << EOL
+/** @type {import("next").NextConfig} */
+const nextConfig = {
+  reactStrictMode: true,
+  output: "export",
+  images: {
+    unoptimized: true,
+    domains: ["api.cyberaegis.com"],
+  },
+  env: {
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+  },
+}
+
+module.exports = nextConfig
+EOL
+
+# Configurar Tailwind
+echo -e "${GREEN}Configurando Tailwind CSS...${NC}"
+cat > tailwind.config.js << EOL
+/** @type {import("tailwindcss").Config} */
+module.exports = {
+  content: [
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+}
+EOL
+
+# Crear archivos base
+echo -e "${GREEN}Creando archivos base...${NC}"
+
+# _app.js
+cat > src/pages/_app.js << EOL
+import "../styles/globals.css"
+
+function MyApp({ Component, pageProps }) {
+  return <Component {...pageProps} />
+}
+
+export default MyApp
+EOL
+
+# globals.css
+cat > src/styles/globals.css << EOL
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+EOL
+
+# Variables de entorno
+echo -e "${GREEN}Configurando variables de entorno...${NC}"
+cat > .env.development << EOL
+NEXT_PUBLIC_API_URL=http://localhost:3000
+EOL
+
+cat > .env.production << EOL
+NEXT_PUBLIC_API_URL=https://api.cyberaegis.com
+EOL
+
+# Configurar GitHub Actions
+echo -e "${GREEN}Configurando GitHub Actions...${NC}"
+mkdir -p .github/workflows
+cat > .github/workflows/deploy.yml << EOL
+name: Deploy to Cloudflare Pages
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "16"
+          cache: npm
+      - run: npm install
+      - run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: \${{ secrets.NEXT_PUBLIC_API_URL }}
+      - uses: cloudflare/pages-action@v1
+        with:
+          apiToken: \${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: \${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: cyberaegis
+          directory: .next/static
+          gitHubToken: \${{ secrets.GITHUB_TOKEN }}
+EOL
+
+# Configurar Git
+echo -e "${GREEN}Inicializando repositorio Git...${NC}"
+git init
+cat > .gitignore << EOL
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# local env files
+.env*.local
+.env.development
+.env.production
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+EOL
+
+git add .
+git commit -m "Initial commit"
+
+echo -e "${BLUE}Configuración completada con éxito!${NC}"
+echo -e "${GREEN}Para iniciar el desarrollo:${NC}"
+echo -e "cd cyberaegis"
+echo -e "npm run dev"
+' > setup_cyberaegis.sh
+
+chmod +x setup_cyberaegis.sh
+
+echo "Script creado como 'setup_cyberaegis.sh'"
+echo "Para ejecutar:"
+echo "1. ./setup_cyberaegis.sh"
