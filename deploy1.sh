@@ -1,4 +1,4 @@
-```bash
+``$(bash
 #!/bin/bash
 
 # Colores para output
@@ -10,9 +10,9 @@ NC='\033[0m'
 # Configuración
 GITHUB_USERNAME="hectoraparici0"
 REPO_NAME="cyberaegis"
-GITHUB_TOKEN="YOUR_GITHUB_TOKEN"
-CLOUDFLARE_API_TOKEN="YOUR_CLOUDFLARE_TOKEN"
-CLOUDFLARE_ACCOUNT_ID="YOUR_ACCOUNT_ID"
+GITHUB_TOKEN="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"
+CLOUDFLARE_API_TOKEN="xOJR8-hqntVIKabKdgeT2DkApsF2DtVzYky_ZKRB"
+CLOUDFLARE_ACCOUNT_ID="af1676425306ed5a03bdb8fcb6d12667"
 PROJECT_NAME="cyberaegis"
 
 echo -e "${BLUE}Iniciando despliegue de CyberAegis...${NC}"
@@ -196,4 +196,4 @@ main() {
 # Ejecutar script
 main
 
-```
+)``
