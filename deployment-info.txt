@@ -1,0 +1,19 @@
+Proyecto: CyberAegis
+URL: https://hapariciop.uk
+Pages URL: https://cyberaegis.pages.dev
+Zone ID: 51bda3188bf89f6ace6e4b93fe202945
+Account ID: af1676425306ed5a03bdb8fcb6d12667
+Fecha: Thu Nov 21 17:06:02 CST 2024
+
+Configuración DNS:
+- Tipo: CNAME
+- Nombre: @
+- Contenido: cyberaegis.pages.dev
+- Proxy: Activado
+
+SSL/TLS: Strict
+
+Pasos de verificación:
+1. Accede al sitio: https://hapariciop.uk
+2. Verifica SSL/TLS en Cloudflare
+3. Comprueba la carga correcta del contenido
