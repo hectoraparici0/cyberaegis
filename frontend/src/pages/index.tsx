@@ -1,13 +1,17 @@
-import { DashboardLayout } from '../components/dashboard/DashboardLayout';
-import { SecurityMetrics } from '../components/security/SecurityMetrics';
+import React from 'react';
+import { Shield } from 'lucide-react';
 
 export default function Home() {
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <SecurityMetrics />
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      <div className="container mx-auto px-4 py-16">
+        <div className="flex items-center justify-center">
+          <Shield className="w-12 h-12 text-purple-400" />
+          <h1 className="text-4xl font-bold text-white ml-4">
+            AET Security Platform
+          </h1>
+        </div>
       </div>
-    </DashboardLayout>
+    </div>
   );
 }
