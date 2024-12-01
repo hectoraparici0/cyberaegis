@@ -7,324 +7,199 @@ RED="\033[0;31m"
 YELLOW="\033[1;33m"
 NC="\033[0m"
 
+# Configuración
 PROJECT_NAME="aet-security"
-GITHUB_USERNAME=""
-GITHUB_TOKEN=""
 
-# Función para manejar errores
-handle_error() {
-    echo -e "${RED}Error: $1${NC}"
-    exit 1
-}
+echo -e "${BLUE}=== Configurando AET Security Platform ===${NC}"
 
-# Obtener credenciales de GitHub
-get_credentials() {
-    echo -e "${YELLOW}Configurando credenciales...${NC}"
-    read -p "Ingresa tu nombre de usuario de GitHub: " GITHUB_USERNAME
-    read -sp "Ingresa tu token de GitHub: " GITHUB_TOKEN
-    echo
-}
+# Crear proyecto y estructura base
+echo -e "\n${YELLOW}Creando proyecto...${NC}"
+npm create vite@latest $PROJECT_NAME -- --template react-ts
+cd $PROJECT_NAME
 
-# Verificar y instalar dependencias
-install_dependencies() {
-    echo -e "${BLUE}Verificando e instalando dependencias...${NC}"
+# Instalar dependencias
+echo -e "\n${YELLOW}Instalando dependencias...${NC}"
+npm install lucide-react @tanstack/react-query zustand tailwindcss postcss autoprefixer
 
-    # Node.js y npm
-    if ! command -v node &> /dev/null; then
-        echo "Instalando Node.js..."
-        curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-        sudo apt-get install -y nodejs
-    fi
+# Inicializar Tailwind
+echo -e "\n${YELLOW}Inicializando Tailwind...${NC}"
+npx tailwindcss init -p
 
-    # Docker
-    if ! command -v docker &> /dev/null; then
-        echo "Instalando Docker..."
-        curl -fsSL https://get.docker.com -o get-docker.sh
-        sudo sh get-docker.sh
-        sudo usermod -aG docker $USER
-    fi
+# Crear estructura de directorios
+echo -e "\n${YELLOW}Creando estructura de directorios...${NC}"
+mkdir -p src/{components,layouts,hooks,utils,styles}
 
-    # Docker Compose
-    if ! command -v docker-compose &> /dev/null; then
-        echo "Instalando Docker Compose..."
-        sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-        sudo chmod +x /usr/local/bin/docker-compose
-    fi
-
-    # pnpm
-    if ! command -v pnpm &> /dev/null; then
-        echo "Instalando pnpm..."
-        npm install -g pnpm
-    fi
-}
-
-# Crear estructura del proyecto
-create_project_structure() {
-    echo -e "${BLUE}Creando estructura del proyecto...${NC}"
-    
-    mkdir -p $PROJECT_NAME/{frontend,backend,nginx,infrastructure/{docker,k8s},docs}
-    cd $PROJECT_NAME
-
-    # Frontend
-    mkdir -p frontend/{src/{components,pages,layouts,hooks,utils,styles,contexts,services},public}
-    
-    # Backend
-    mkdir -p backend/{src/{controllers,models,routes,services,middleware,utils},config,tests}
-}
-
-# Configurar Frontend
-setup_frontend() {
-    echo -e "${BLUE}Configurando Frontend...${NC}"
-    
-    cd frontend
-
-    # Inicializar Next.js
-    pnpm create next-app . --typescript --tailwind --eslint
-
-    # Instalar dependencias adicionales
-    pnpm add @headlessui/react @heroicons/react lucide-react react-query axios recharts @tanstack/react-query
-
-    # Configurar Tailwind
-    cat > tailwind.config.js << EOL
-module.exports = {
+# Configurar Tailwind
+echo -e "\n${YELLOW}Configurando Tailwind...${NC}"
+cat > tailwind.config.js << 'EOL'
+/** @type {import('tailwindcss').Config} */
+export default {
   content: [
-    './src/**/*.{js,ts,jsx,tsx}',
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    extend: {
-      colors: {
-        primary: colors.purple,
-        secondary: colors.slate,
-      },
-    },
+    extend: {},
   },
   plugins: [],
 }
 EOL
 
-    cd ..
+# Crear archivos base
+echo -e "\n${YELLOW}Creando archivos base...${NC}"
+
+# index.css
+cat > src/index.css << 'EOL'
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+EOL
+
+# App.tsx
+cat > src/App.tsx << 'EOL'
+import Dashboard from './components/Dashboard'
+
+function App() {
+  return <Dashboard />
 }
 
-# Configurar Backend
-setup_backend() {
-    echo -e "${BLUE}Configurando Backend...${NC}"
-    
-    cd backend
-
-    # Inicializar proyecto
-    pnpm init
-
-    # Instalar dependencias
-    pnpm add express cors helmet morgan pg redis dotenv winston
-    pnpm add -D typescript @types/express @types/node ts-node nodemon
-
-    # Configurar TypeScript
-    npx tsc --init
-
-    # Crear archivo principal
-    cat > src/index.ts << EOL
-import express from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
-import morgan from 'morgan';
-
-const app = express();
-const port = process.env.PORT || 4000;
-
-app.use(cors());
-app.use(helmet());
-app.use(morgan('dev'));
-app.use(express.json());
-
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok' });
-});
-
-app.listen(port, () => {
-  console.log(\`Server running on port \${port}\`);
-});
+export default App
 EOL
 
-    cd ..
-}
+# main.tsx
+cat > src/main.tsx << 'EOL'
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App'
+import './index.css'
 
-# Crear archivos Docker
-create_docker_files() {
-    echo -e "${BLUE}Creando archivos Docker...${NC}"
-
-    # Frontend Dockerfile
-    cat > frontend/Dockerfile << EOL
-FROM node:18-alpine AS builder
-WORKDIR /app
-COPY package*.json ./
-RUN npm install
-COPY . .
-RUN npm run build
-
-FROM nginx:alpine
-COPY --from=builder /app/build /usr/share/nginx/html
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
+)
 EOL
 
-    # Backend Dockerfile
-    cat > backend/Dockerfile << EOL
-FROM node:18-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm install
-COPY . .
-EXPOSE 4000
-CMD ["npm", "start"]
+# Dashboard.tsx
+cat > src/components/Dashboard.tsx << 'EOL'
+import { useState } from 'react';
+import { Shield, Lock, AlertCircle, Activity, BarChart, Cloud, 
+         Code, Cpu, Smartphone, Wifi, Server, Settings, 
+         ChevronRight, AlertTriangle, Timer, Menu } from 'lucide-react';
+
+const Dashboard = () => {
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [activeModule, setActiveModule] = useState('overview');
+
+  const metrics = {
+    security: { score: 98, threats: 156, incidents: 0 },
+    system: { uptime: "99.99%", response: "45ms", load: "23%" },
+    revenue: { current: 1250000, growth: 15.4, projected: 1500000 }
+  };
+
+  return (
+    <div className="h-screen w-screen overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      <div className="flex h-full">
+        {/* Sidebar */}
+        <div className={`${sidebarCollapsed ? 'w-16' : 'w-64'} bg-slate-800/50 h-full backdrop-blur-sm border-r border-purple-500/20 transition-all duration-300`}>
+          <div className="p-4">
+            <div className="flex items-center space-x-2 mb-8">
+              <button 
+                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+              >
+                <Menu className="w-6 h-6 text-white" />
+              </button>
+              {!sidebarCollapsed && <span className="text-xl font-bold text-white">AET Security</span>}
+            </div>
+
+            <nav className="space-y-2">
+              {[
+                { name: 'Overview', icon: Activity },
+                { name: 'Network', icon: Shield },
+                { name: 'Cloud', icon: Cloud },
+                { name: 'Quantum', icon: Cpu },
+                { name: 'Mobile', icon: Smartphone },
+                { name: 'IoT', icon: Wifi },
+                { name: 'Infrastructure', icon: Server },
+                { name: 'Development', icon: Code },
+                { name: 'Settings', icon: Settings }
+              ].map(item => (
+                <button
+                  key={item.name}
+                  onClick={() => setActiveModule(item.name.toLowerCase())}
+                  className={`flex items-center w-full px-3 py-2 rounded-lg transition-colors
+                    ${activeModule === item.name.toLowerCase()
+                      ? 'bg-purple-600 text-white'
+                      : 'text-gray-300 hover:bg-white/10'
+                    }`}
+                >
+                  <item.icon className="w-5 h-5" />
+                  {!sidebarCollapsed && <span className="ml-3">{item.name}</span>}
+                </button>
+              ))}
+            </nav>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="flex-1 overflow-auto">
+          <div className="p-8">
+            {/* Header */}
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold text-white">Welcome to AET Security</h1>
+              <p className="text-gray-400">Your security systems overview</p>
+            </div>
+
+            {/* Security Metrics */}
+            <div className="grid grid-cols-3 gap-6 mb-8">
+              <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-purple-500/20">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-medium text-white">Security Score</h3>
+                  <Shield className="w-6 h-6 text-purple-400" />
+                </div>
+                <div className="text-3xl font-bold text-white mb-2">{metrics.security.score}%</div>
+                <div className="text-sm text-green-400">Optimal Protection</div>
+              </div>
+
+              <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-purple-500/20">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-medium text-white">Active Threats</h3>
+                  <AlertTriangle className="w-6 h-6 text-orange-400" />
+                </div>
+                <div className="text-3xl font-bold text-white mb-2">{metrics.security.threats}</div>
+                <div className="text-sm text-orange-400">Under Control</div>
+              </div>
+
+              <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-purple-500/20">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-medium text-white">System Status</h3>
+                  <Activity className="w-6 h-6 text-green-400" />
+                </div>
+                <div className="text-3xl font-bold text-white mb-2">{metrics.system.uptime}</div>
+                <div className="text-sm text-green-400">All Systems Operational</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Dashboard;
 EOL
 
-    # docker-compose.yml
-    cat > docker-compose.yml << EOL
-version: '3.8'
+# Iniciar el proyecto
+echo -e "\n${YELLOW}Iniciando el proyecto...${NC}"
+npm install
+npm run dev
 
-services:
-  frontend:
-    build: ./frontend
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./frontend:/app
-    environment:
-      - NODE_ENV=development
-    depends_on:
-      - backend
-
-  backend:
-    build: ./backend
-    ports:
-      - "4000:4000"
-    volumes:
-      - ./backend:/app
-    environment:
-      - NODE_ENV=development
-      - DATABASE_URL=postgresql://postgres:password@db:5432/aetdb
-    depends_on:
-      - db
-
-  db:
-    image: postgres:14-alpine
-    ports:
-      - "5432:5432"
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=aetdb
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
-  redis:
-    image: redis:alpine
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-
-volumes:
-  postgres_data:
-  redis_data:
-EOL
-}
-
-# Inicializar Git y subir a GitHub
-setup_git() {
-    echo -e "${BLUE}Configurando Git y GitHub...${NC}"
-
-    git init
-
-    # Crear .gitignore
-    cat > .gitignore << EOL
-# Dependencies
-node_modules/
-.pnpm-store/
-
-# Environment
-.env
-.env.local
-.env.*
-
-# Build
-dist/
-build/
-.next/
-
-# IDE
-.vscode/
-.idea/
-
-# Logs
-*.log
-npm-debug.log*
-
-# System
-.DS_Store
-Thumbs.db
-EOL
-
-    # Primer commit
-    git add .
-    git commit -m "Initial commit"
-
-    # Crear repositorio en GitHub y subir
-    curl -X POST \
-        -H "Authorization: token $GITHUB_TOKEN" \
-        -H "Accept: application/vnd.github.v3+json" \
-        https://api.github.com/user/repos \
-        -d "{\"name\":\"$PROJECT_NAME\",\"private\":true}"
-
-    git remote add origin "https://$GITHUB_TOKEN@github.com/$GITHUB_USERNAME/$PROJECT_NAME.git"
-    git branch -M main
-    git push -u origin main
-}
-
-# Crear scripts de inicio
-create_startup_scripts() {
-    echo -e "${BLUE}Creando scripts de inicio...${NC}"
-
-    # Script de desarrollo
-    cat > dev.sh << EOL
-#!/bin/bash
-docker-compose up -d
-EOL
-    chmod +x dev.sh
-
-    # Script de producción
-    cat > prod.sh << EOL
-#!/bin/bash
-docker-compose -f docker-compose.prod.yml up -d
-EOL
-    chmod +x prod.sh
-}
-
-# Función principal
-main() {
-    echo -e "${BLUE}=== Iniciando configuración automática de AET Security ===${NC}"
-    
-    get_credentials
-    install_dependencies
-    create_project_structure
-    setup_frontend
-    setup_backend
-    create_docker_files
-    setup_git
-    create_startup_scripts
-
-    echo -e "\n${GREEN}¡Configuración completada!${NC}"
-    echo -e "\nPara iniciar el desarrollo:"
-    echo -e "1. cd $PROJECT_NAME"
-    echo -e "2. ./dev.sh"
-    
-    echo -e "\nAccede a:"
-    echo -e "- Frontend: http://localhost:3000"
-    echo -e "- Backend: http://localhost:4000"
-}
-
-# Manejo de errores
-trap 'handle_error "La configuración falló. Revisa los mensajes anteriores."' ERR
-
-# Ejecutar script
-main
+echo -e "\n${GREEN}¡Configuración completada!${NC}"
+echo -e "El proyecto está ejecutándose en http://localhost:5173"
